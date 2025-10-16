@@ -27,7 +27,7 @@ class Ticket extends StatelessWidget {
                   apellido: 'Wimpillay',
                   dni: '12345678',
                   cantidad: 1,
-                  monto: 4.0,
+                  monto: 1.0,
                 );
               },
               child: const Text('Tomar'),
