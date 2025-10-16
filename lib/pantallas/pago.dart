@@ -7,7 +7,7 @@ class Pago extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final monto = cantidad * 4.0;
+    final monto = cantidad * 1.0;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Pago')),
