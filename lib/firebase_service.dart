@@ -1,72 +1,104 @@
-// Importaciones para Firestore
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Instancia de Firestore
-final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+class ServicioFirebase {
+  // ignore: unused_field
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-// Colección de usuarios en Firestore
-final CollectionReference _usuariosRef = _firestore.collection('usuarios');
+  // 🔹 Colección de usuarios
+  final CollectionReference _usuariosRef = FirebaseFirestore.instance.collection('usuarios');
 
-// Método para obtener todos los usuarios
-Future<List<Map<String, dynamic>>> obtenerUsuarios() async {
-  try {
-    // Obtener snapshot de la colección
-    QuerySnapshot snapshot = await _usuariosRef.get();
-    
-    // Mapear cada documento a un Map con los datos
-    List<Map<String, dynamic>> usuarios = snapshot.docs.map((doc) {
-      return {
-        'uid': doc.id,  // ID del documento
-        'dni': doc['dni'],  // Campo DNI
-        'nombre': doc['nombre'],  // Campo nombre
-      };
-    }).toList();
-    
-    return usuarios;  // Retornar lista de usuarios
-  } catch (e) {
-    // En caso de error, retornar lista vacía
-    print("Error al obtener usuarios: $e");
-    return [];
+  // 🔹 Colección de tickets
+  final CollectionReference _ticketsRef = FirebaseFirestore.instance.collection('tickets');
+
+  // ✅ Obtener todos los usuarios
+  Future<List<Map<String, dynamic>>> obtenerUsuarios() async {
+    try {
+      QuerySnapshot snapshot = await _usuariosRef.get();
+      return snapshot.docs.map((doc) {
+        return {
+          'uid': doc.id,
+          'dni': doc['dni'],
+          'nombre': doc['nombre'],
+        };
+      }).toList();
+    } catch (e) {
+      print("Error al obtener usuarios: $e");
+      return [];
+    }
   }
-}
 
-// Método para agregar un usuario
-Future<void> agregarUsuario(String dni, String nombre) async {
-  try {
-    // Agregar documento a la colección
-    await _usuariosRef.add({
-      'dni': dni,  // Campo DNI
-      'nombre': nombre,  // Campo nombre
-      'fechaCreacion': FieldValue.serverTimestamp(),  // Fecha automática
-    });
-  } catch (e) {
-    print("Error al agregar usuario: $e");
-    throw e;  // Relanzar error
+  // ✅ Agregar usuario
+  Future<void> agregarUsuario(String dni, String nombre) async {
+    try {
+      await _usuariosRef.add({
+        'dni': dni,
+        'nombre': nombre,
+        'fechaCreacion': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Error al agregar usuario: $e");
+      throw e;
+    }
   }
-}
 
-// Método para eliminar un usuario
-Future<void> eliminarUsuario(String uid) async {
-  try {
-    // Eliminar documento por UID
-    await _usuariosRef.doc(uid).delete();
-  } catch (e) {
-    print("Error al eliminar usuario: $e");
-    throw e;  // Relanzar error
+  // ✅ Eliminar usuario
+  Future<void> eliminarUsuario(String uid) async {
+    try {
+      await _usuariosRef.doc(uid).delete();
+    } catch (e) {
+      print("Error al eliminar usuario: $e");
+      throw e;
+    }
   }
-}
 
-// Método para actualizar un usuario
-Future<void> actualizarUsuario(String uid, String dni, String nombre) async {
-  try {
-    // Actualizar documento por UID
-    await _usuariosRef.doc(uid).update({
-      'dni': dni,  // Nuevo DNI
-      'nombre': nombre,  // Nuevo nombre
-      'fechaActualizacion': FieldValue.serverTimestamp(),  // Fecha de actualización
-    });
-  } catch (e) {
-    print("Error al actualizar usuario: $e");
-    throw e;  // Relanzar error
+  // ✅ Actualizar usuario
+  Future<void> actualizarUsuario(String uid, String dni, String nombre) async {
+    try {
+      await _usuariosRef.doc(uid).update({
+        'dni': dni,
+        'nombre': nombre,
+        'fechaActualizacion': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Error al actualizar usuario: $e");
+      throw e;
+    }
+  }
+
+  // ✅ Crear ticket
+  Future<void> crearTicket({
+    required String nombre,
+    required String apellido,
+    required String dni,
+    required int cantidad,
+    required double monto,
+  }) async {
+    try {
+      await _ticketsRef.add({
+        'nombre': nombre,
+        'apellido': apellido,
+        'dni': dni,
+        'cantidad': cantidad,
+        'monto': monto,
+        'codigoQR': dni + DateTime.now().millisecondsSinceEpoch.toString(),
+        'fecha': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Error al crear ticket: $e");
+      throw e;
+    }
+  }
+
+  // ✅ Validar ticket por código QR
+  Future<bool> validarQR(String codigoQR) async {
+    try {
+      final resultado = await _ticketsRef
+          .where('codigoQR', isEqualTo: codigoQR)
+          .get();
+      return resultado.docs.isNotEmpty;
+    } catch (e) {
+      print("Error al validar QR: $e");
+      return false;
+    }
   }
 }
